@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { generateAccount } from "../wallet-utils/AccountUtils";
 import AccountDetails from "./AccountDetails";
 import TransactionDetails from "./TransactionDetails";
 import Loading from "./Loading";
+import { toast } from "react-toastify";
 
-interface Account {
+export interface Account {
   privateKey: string;
   address: string;
   balance: string;
@@ -28,27 +29,44 @@ const AccountCreate: React.FC = () => {
 
   const showInputFunction = () => {
     setShowInput(true);
-    setAccount(null)
+    setAccount(null);
   };
 
   const handleSeedPhraseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSeedPhrase(e.target.value);
   };
 
+  const notify = () => toast("Seed phrase is not correct or invalid");
+
   const handleSeedPhraseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const account = await generateAccount(seedPhrase);
-    setLoading(false);
-    setSeedPhrase(account.seedPhrase);
-    setAccount(account.account);
+    try {
+      const account = await generateAccount(seedPhrase);
+      console.log(account);
+      setSeedPhrase(account.seedPhrase);
+      setAccount(account.account);
+    } catch (e) {
+      console.log(e);
+      notify();
+      setShowInput(true);
+      setAccount(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTransactionCompleted = () => {
+    if (account) {
+      setAccount({...account});
+    }
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white rounded-md shadow-md p-6">
+    <div className="w-full mx-3 bg-white rounded-md shadow-md p-6">
       {loading ? <Loading /> : null}
-
       <h2 className="text-center text-2xl font-bold mb-4">Khoa Diamond Coin Management</h2>
+      <div className="flex items-center justify-center">
       <button
         onClick={createAccount}
         className="text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 shadow-lg shadow-purple-500/50 dark:shadow-lg dark:shadow-purple-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
@@ -61,10 +79,13 @@ const AccountCreate: React.FC = () => {
       >
         Access wallet by seed phrase
       </button>
+
+      </div>
       {showInput && (
         <form onSubmit={handleSeedPhraseSubmit} className="flex m-2">
           <input
             type="text"
+            required
             value={seedPhrase}
             onChange={handleSeedPhraseChange}
             className="bg-transparent border border-gray-300 rounded-md w-full py-2 px-4 placeholder-gray-400 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mr-2"
@@ -93,9 +114,9 @@ const AccountCreate: React.FC = () => {
         </div>
       ) : null}
 
-      {account && <hr className="my-3"/>}
-      {account && <AccountDetails account={account} />}
-      {account && <TransactionDetails address={account.address} />}
+      {account && <hr className="my-3" />}
+      {account && <AccountDetails account={account} onTransactionComplete={handleTransactionCompleted} />}
+      {account && <TransactionDetails account={account} />}
     </div>
   );
 };

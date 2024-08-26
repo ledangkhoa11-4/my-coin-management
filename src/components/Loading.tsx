@@ -1,5 +1,5 @@
 import { CSSProperties } from "react";
-import { CircleLoader, ClipLoader, DotLoader } from "react-spinners";
+import { DotLoader } from "react-spinners";
 
 const Loading = () => {
   const override: CSSProperties = {
